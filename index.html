@@ -1,0 +1,804 @@
+<title>Unicorn Routine</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: one-screen iPad landscape app — header bar, then a screen (week board + activity panel / dress-up stage + wardrobe / settings) over a chosen fairytale background */
+:root{
+  --berry:#8c1d5e;        /* main text */
+  --rose:#e8458f;         /* accent */
+  --bubble:#ff9ccc;       /* soft accent */
+  --blush:#ffe6f2;        /* tint surface */
+  --lilac:#a779ee;        /* secondary accent */
+  --gold:#ffbf3c;         /* stars, points */
+  --glass:rgba(255,255,255,.80);
+  --line:#ffffff;
+  --display:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Avenir Next","Helvetica Neue",system-ui,sans-serif;
+  --r-lg:28px; --r-md:18px; --r-sm:12px;
+  --shadow:0 6px 22px rgba(214,64,140,.22);
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:#ffd9ec center/cover no-repeat fixed;color:var(--berry);font-family:var(--body);font-weight:700;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overflow:hidden;-webkit-tap-highlight-color:transparent}
+img{-webkit-user-drag:none;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
+#app{height:100%;display:flex;flex-direction:column;gap:12px;padding:12px 16px;box-sizing:border-box}
+.glass{background:var(--glass);border:3px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+
+/* header */
+.top{display:flex;align-items:center;gap:14px;padding:8px 14px;flex-wrap:wrap}
+.hello{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 220px}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--blush) center 18%/150% no-repeat;border:3px solid #fff;box-shadow:0 0 0 3px var(--bubble);flex:none}
+.hello h1{font-family:var(--display);font-weight:800;font-size:26px;line-height:1;margin:0;color:var(--rose)}
+.hello p{margin:2px 0 0;font-size:14px;opacity:.8}
+.pill{display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:6px 16px 6px 8px;box-shadow:inset 0 0 0 3px var(--blush);font-family:var(--display)}
+.pill .star{width:34px;height:34px}
+.pill b{font-size:28px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.pill small{font-family:var(--body);font-size:12px;line-height:1.1;opacity:.75;text-align:left}
+.pill.today b{color:var(--lilac)}
+.nav{display:flex;gap:8px}
+.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:78px;height:62px;border-radius:var(--r-md);background:#fff;box-shadow:inset 0 0 0 3px var(--blush);font-size:12px;position:relative;transition:transform .15s}
+.navbtn svg{width:30px;height:30px}
+.navbtn[aria-current="page"]{background:linear-gradient(#ffb3d6,#ff86bf);color:#fff;box-shadow:inset 0 0 0 3px #fff,0 4px 12px rgba(232,69,143,.35)}
+.navbtn:active{transform:scale(.94)}
+.badge{position:absolute;top:-6px;right:-6px;min-width:24px;height:24px;border-radius:12px;background:var(--rose);color:#fff;font-size:14px;display:grid;place-items:center;padding:0 6px;box-sizing:border-box;border:2px solid #fff}
+.navbtn.ready{animation:wiggle 1.4s ease-in-out infinite}
+@keyframes wiggle{0%,70%,100%{transform:rotate(0)}75%{transform:rotate(-8deg)}85%{transform:rotate(8deg)}92%{transform:rotate(-4deg)}}
+
+main{flex:1;min-height:0;display:flex}
+.screen{flex:1;min-height:0;display:grid;gap:12px}
+
+/* timetable */
+#scr-time{grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr)}
+.treasure{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:8px 16px;flex-wrap:wrap}
+.treasure h2,.panel h2{font-family:var(--display);font-size:20px;margin:0;color:var(--rose);line-height:1.1}
+.treasure .count{font-size:13px;opacity:.8;font-variant-numeric:tabular-nums}
+.thumbs{display:flex;gap:6px;flex:1 1 200px;min-width:0;overflow:hidden}
+.thumbs .t{width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:inset 0 0 0 2px var(--blush);flex:none}
+.thumbs .t img{max-width:40px;max-height:40px}
+.thumbs .empty{font-size:13px;opacity:.7;align-self:center}
+.progress{display:flex;flex-direction:column;gap:4px;width:230px}
+.progress .bar{height:14px;border-radius:7px;background:#fff;box-shadow:inset 0 0 0 2px var(--blush);overflow:hidden}
+.progress .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd36b,#ff8fc4,#b993ff);border-radius:7px;transition:width .6s}
+.progress span{font-size:12px;opacity:.85}
+
+.board{display:flex;flex-direction:column;padding:10px;min-height:0}
+.weekbar{display:flex;align-items:center;justify-content:center;gap:12px;padding:0 0 8px}
+.weekbar h2{font-family:var(--display);font-size:18px;margin:0;min-width:200px;text-align:center}
+.arrow{width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 3px var(--blush);font-size:20px;line-height:1;font-family:var(--display)}
+.arrow:disabled{opacity:.3;cursor:default}
+.days{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.day{display:flex;flex-direction:column;min-height:0;border-radius:var(--r-md);background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 2px #fff;transition:box-shadow .2s,transform .2s}
+.day header{padding:6px 4px 4px;text-align:center}
+.day .ico{font-size:18px;line-height:1}
+.day .name{display:block;margin:2px auto 0;border-radius:999px;padding:3px 0;color:#fff;font-family:var(--display);font-size:15px;font-weight:700;background:var(--c);box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.day .date{font-size:11px;opacity:.7}
+.day .body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 6px}
+.chip{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"i n n" "i x p";column-gap:6px;align-items:center;text-align:left;background:#fff;border-radius:var(--r-sm);padding:4px 6px;box-shadow:0 2px 6px rgba(214,64,140,.12);position:relative;animation:pop .35s ease-out}
+.chip img{grid-area:i;width:34px;height:34px;object-fit:contain}
+.chip .lbl{grid-area:n;font-size:12px;line-height:1.15}
+.chip .x{grid-area:x;font-family:var(--display);font-size:14px;font-weight:800;line-height:1.2}
+.chip .p{grid-area:p;font-size:11px;opacity:.65;font-variant-numeric:tabular-nums;line-height:1.2}
+/* rewards (chest drops + dress up) hidden for now — set REWARDS = true in the script to bring them back */
+body.no-rewards .treasure,body.no-rewards #chestBtn,body.no-rewards .navbtn[data-go="dress"],body.no-rewards .rw{display:none!important}
+body.no-rewards #scr-time{grid-template-rows:minmax(0,1fr)}
+.chip.neg .p{color:#d33}
+.day.today .chip{cursor:pointer}
+.slot{border:2px dashed rgba(232,69,143,.3);border-radius:var(--r-sm);min-height:40px;display:grid;place-items:center;font-size:20px;color:rgba(232,69,143,.45)}
+.day footer{padding:6px;text-align:center;font-size:12px;line-height:1.25;border-top:2px dashed rgba(255,255,255,.9)}
+.day footer b{font-family:var(--display);font-size:20px;display:block;line-height:1.1;font-variant-numeric:tabular-nums}
+.day footer .miss{color:#c2185b}
+.day.today{background:rgba(255,255,255,.92);box-shadow:inset 0 0 0 3px var(--bubble),0 0 0 4px rgba(255,156,204,.35)}
+.day.today .tag{display:inline-block;background:var(--gold);color:#fff;border-radius:999px;font-size:10px;padding:0 6px;margin-top:2px;font-family:var(--display);letter-spacing:.04em}
+.day.future,.day.pre{opacity:.55}
+.day.hot{transform:scale(1.03);box-shadow:inset 0 0 0 4px var(--rose),0 0 22px rgba(232,69,143,.5)}
+
+.panel{display:flex;flex-direction:column;gap:8px;padding:12px;min-height:0}
+.panel .hint{font-size:12px;opacity:.75;margin:0}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1;min-height:0;align-content:start;overflow-y:auto}
+.act{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border-radius:var(--r-md);padding:8px 4px 6px;box-shadow:0 3px 10px rgba(214,64,140,.14);touch-action:none;cursor:grab;text-align:center}
+.act img{width:52px;height:52px;object-fit:contain;pointer-events:none}
+.act .n{font-size:12px;line-height:1.1;min-height:2.2em;display:flex;align-items:center}
+.act .pts{position:absolute;top:4px;right:4px;font-family:var(--display);font-size:13px;font-weight:800;background:var(--gold);color:#fff;border-radius:999px;padding:0 6px;line-height:1.5}
+.act.neg .pts{background:#9a8cb8}
+.act.locked{cursor:not-allowed}
+.act.locked img{filter:grayscale(1) opacity(.45)}
+.act .lock{position:absolute;inset:0;display:grid;place-items:center;border-radius:var(--r-md);background:rgba(255,240,248,.35);font-size:26px}
+.act.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.unlock-note{font-size:12px;background:var(--blush);border-radius:var(--r-sm);padding:6px 8px;line-height:1.3}
+
+.ghost{position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-50%) scale(1.15);filter:drop-shadow(0 8px 12px rgba(140,29,94,.3))}
+.float{position:fixed;z-index:60;pointer-events:none;font-family:var(--display);font-weight:800;font-size:34px;color:var(--gold);-webkit-text-stroke:2px #fff;animation:floatup 1s ease-out forwards}
+.float.neg{color:#9a8cb8}
+@keyframes floatup{to{transform:translateY(-70px);opacity:0}}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.spark{position:fixed;z-index:59;pointer-events:none;width:14px;height:14px;animation:spark .8s ease-out forwards}
+@keyframes spark{to{transform:translate(var(--dx),var(--dy)) rotate(180deg) scale(.3);opacity:0}}
+
+/* dress up */
+#scr-dress{grid-template-columns:minmax(0,1fr) 380px}
+.stage{position:relative;overflow:hidden;display:flex;justify-content:center;align-items:flex-end;gap:2%;padding:16px;background:center/cover no-repeat}
+.stage::after{content:"";position:absolute;inset:auto 0 0;height:22%;background:linear-gradient(transparent,rgba(255,255,255,.55));pointer-events:none}
+.unicorn{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;flex:1;max-width:48%}
+.doll{position:relative;height:min(72%,440px);max-width:100%;touch-action:none}
+.doll .base,.doll .face{position:absolute;pointer-events:none}
+.doll .base{inset:0;width:100%;height:100%}
+.doll.hot{filter:drop-shadow(0 0 16px #fff) drop-shadow(0 0 8px var(--rose))}
+.worn{position:absolute;transform:translate(-50%,-50%);touch-action:none;cursor:grab;transition:filter .2s}
+.worn.active{filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 4px var(--lilac))}
+.worn.falling{transition:transform .7s cubic-bezier(.5,0,.9,.6),opacity .7s;opacity:0;pointer-events:none}
+.ctrl{display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(255,255,255,.85);border-radius:var(--r-md);padding:6px 10px;border:2px solid #fff}
+.ctrl .who{font-family:var(--display);font-size:16px;display:flex;align-items:center;gap:8px}
+.ctrl .who button{font-size:12px;background:var(--blush);border-radius:999px;padding:2px 10px}
+.faces{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.faces button{width:40px;height:40px;border-radius:50%;background:#fff center 30%/130% no-repeat;box-shadow:inset 0 0 0 2px var(--blush)}
+.faces button[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--rose)}
+.faces .orig{font-size:10px;line-height:1.05;display:grid;place-items:center;background:var(--blush)}
+
+.wardrobe{display:flex;flex-direction:column;gap:8px;padding:12px;min-height:0}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{flex:1 1 auto;border-radius:999px;padding:6px 8px;background:#fff;font-size:13px;box-shadow:inset 0 0 0 2px var(--blush)}
+.tabs button[aria-selected="true"]{background:var(--rose);color:#fff;box-shadow:none}
+.wgrid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start;padding:2px}
+.wi{aspect-ratio:1;background:#fff;border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;box-sizing:border-box;box-shadow:0 2px 8px rgba(214,64,140,.12);touch-action:pan-y;cursor:grab;position:relative}
+.wi img{max-width:84%;max-height:70%;object-fit:contain;pointer-events:none}
+.wi span{font-size:10px;line-height:1.1;text-align:center;opacity:.8}
+.wi.locked{cursor:default;background:rgba(255,255,255,.6)}
+.wi.locked img{filter:brightness(0) opacity(.13)}
+.wi.locked span{opacity:.5}
+.wi .new{position:absolute;top:4px;left:4px;background:var(--gold);color:#fff;font-size:10px;border-radius:999px;padding:0 6px;font-family:var(--display)}
+
+/* settings */
+#scr-set{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);overflow:auto}
+#scr-set .panel{overflow:auto}
+.bgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.bgc{position:relative;border-radius:var(--r-md);overflow:hidden;background:#fff;box-shadow:inset 0 0 0 3px #fff,0 3px 10px rgba(214,64,140,.18);text-align:left}
+.bgc img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.bgc span{display:block;padding:6px 10px;font-family:var(--display);font-size:15px}
+.bgc[aria-pressed="true"]{box-shadow:inset 0 0 0 4px var(--rose),0 3px 10px rgba(214,64,140,.3)}
+.bgc[aria-pressed="true"]::after{content:"✓";position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:var(--rose);color:#fff;display:grid;place-items:center;font-size:18px}
+.bgc.locked img{filter:grayscale(.8) blur(2px) opacity(.6)}
+.bgc .lk{position:absolute;inset:0 0 34px;display:grid;place-items:center;font-size:13px;text-align:center;padding:10px;color:var(--berry)}
+.rules{width:100%;border-collapse:collapse;font-size:14px}
+.rules td{padding:5px 4px;border-bottom:2px dashed var(--blush)}
+.rules td:last-child{text-align:right;font-family:var(--display);font-size:17px;font-variant-numeric:tabular-nums}
+.rules img{width:30px;height:30px;vertical-align:middle;margin-right:6px}
+.notes{margin:0;padding-left:18px;font-size:13px;line-height:1.5}
+.danger{align-self:flex-start;border-radius:999px;padding:8px 16px;background:#fff;box-shadow:inset 0 0 0 2px #f3a6c8;font-size:13px}
+.danger.armed{background:#e8458f;color:#fff}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(140,29,94,.35);padding:16px}
+.mcard{width:min(440px,100%);text-align:center;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,255,255,.95)}
+.mcard h2{font-family:var(--display);font-size:28px;margin:0;color:var(--rose);line-height:1.1}
+.mcard p{margin:0;font-size:15px;line-height:1.4}
+.chestwrap{position:relative;width:230px;height:200px;display:grid;place-items:end center}
+.rays{position:absolute;inset:-30px;border-radius:50%;background:repeating-conic-gradient(rgba(255,213,107,.55) 0 10deg,transparent 10deg 22deg);opacity:0;transition:opacity .4s;animation:spin 8s linear infinite;-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.chest{width:200px;position:relative;z-index:1}
+.chest .lid{transform-box:fill-box;transform-origin:8% 100%;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
+.chestwrap.shaking .chest{animation:rattle .7s}
+@keyframes rattle{10%,50%,90%{transform:rotate(-5deg)}30%,70%{transform:rotate(5deg)}}
+.chestwrap.open .lid{transform:rotate(-38deg) translate(-6px,-18px)}
+.chestwrap.open .rays{opacity:1}
+.prize{position:absolute;z-index:2;left:50%;bottom:60px;width:150px;height:150px;transform:translate(-50%,40px) scale(.2);opacity:0;transition:transform .6s cubic-bezier(.3,1.5,.5,1) .15s,opacity .3s .15s;display:grid;place-items:center}
+.prize img{max-width:100%;max-height:100%;filter:drop-shadow(0 6px 10px rgba(140,29,94,.3))}
+.chestwrap.open .prize{transform:translate(-50%,-20px) scale(1);opacity:1}
+.btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn{border-radius:999px;padding:10px 20px;font-family:var(--display);font-size:18px;font-weight:700;background:linear-gradient(#ff9fcf,#ff74b4);color:#fff;box-shadow:0 4px 0 #d94a8c}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #d94a8c}
+.btn.soft{background:#fff;color:var(--berry);box-shadow:inset 0 0 0 2px var(--blush),0 3px 0 #f5c3dc}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,120px);z-index:90;background:#fff;border-radius:999px;padding:10px 12px 10px 20px;box-shadow:0 8px 24px rgba(140,29,94,.25);display:flex;gap:12px;align-items:center;font-size:15px;transition:transform .3s;max-width:calc(100% - 32px)}
+.toast.show{transform:translate(-50%,0)}
+.toast button{background:var(--blush);border-radius:999px;padding:4px 12px;font-size:14px}
+.toast button[hidden]{display:none}
+
+@media (max-width:980px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100%}
+  #scr-time,#scr-dress,#scr-set{grid-template-columns:1fr}
+  .board{min-height:520px}
+  .days{overflow-x:auto;grid-template-columns:repeat(7,minmax(110px,1fr))}
+  .stage{min-height:520px}
+  .wardrobe{height:520px}
+  .progress{width:100%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+  <header class="top glass">
+    <div class="hello">
+      <div class="avatar" id="avatar"></div>
+      <div><h1 id="greet">Good Morning!</h1><p>Let's make today a great day!</p></div>
+    </div>
+    <div class="pill" title="All your points">
+      <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.8-4.9 4.6 1.3 6.5L12 17.2l-5.9 3.2 1.3-6.5L2.5 9.3l6.6-.8z" fill="#ffc83d" stroke="#f29c1f" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      <b id="total">0</b><small>Total<br>points</small>
+    </div>
+    <div class="pill today" title="Points earned today">
+      <svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 16.4 12 21 12 21z" fill="#c4a4ff" stroke="#9a72ea" stroke-width="1.2"/></svg>
+      <b id="todayPts">0</b><small>Today</small>
+    </div>
+    <nav class="nav" aria-label="Pages">
+      <button class="navbtn" id="chestBtn" aria-label="Open treasure chest">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="14" width="24" height="14" rx="3" fill="#ff8fc4" stroke="#c2185b" stroke-width="1.6"/><path d="M4 15c0-6 5-9 12-9s12 3 12 9z" fill="#ffb3d6" stroke="#c2185b" stroke-width="1.6"/><rect x="14" y="6.5" width="4" height="21" fill="#ffc83d"/><circle cx="16" cy="17" r="2.6" fill="#ffc83d" stroke="#d48a00"/></svg>
+        Chest<span class="badge" id="chestBadge" hidden>0</span>
+      </button>
+      <button class="navbtn" data-go="time" aria-current="page">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="6" width="24" height="22" rx="4" fill="#fff" stroke="#e8458f" stroke-width="1.8"/><rect x="4" y="6" width="24" height="7" rx="3" fill="#ff8fc4"/><circle cx="11" cy="19" r="2" fill="#ffc83d"/><circle cx="16" cy="19" r="2" fill="#a779ee"/><circle cx="21" cy="19" r="2" fill="#7fd0a6"/></svg>
+        Timetable
+      </button>
+      <button class="navbtn" data-go="dress">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 5l-6 4 3 5 3-2v15h10V12l3 2 3-5-6-4c-1 2-3 3-5 3s-4-1-5-3z" fill="#c4a4ff" stroke="#8a5ad8" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Dress Up
+      </button>
+      <button class="navbtn" data-go="set">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4c-6.6 0-12 4.9-12 11 0 5 4 7 7 7 1.5 0 2 1 2 2 0 2 1 4 3 4 6.6 0 12-5 12-12S22.6 4 16 4z" fill="#ffe6f2" stroke="#e8458f" stroke-width="1.8"/><circle cx="10" cy="13" r="2.2" fill="#ff74b4"/><circle cx="16" cy="9.5" r="2.2" fill="#ffc83d"/><circle cx="22" cy="13" r="2.2" fill="#a779ee"/><circle cx="21" cy="20" r="2.2" fill="#7fd0a6"/></svg>
+        Settings
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TIMETABLE -->
+    <section class="screen" id="scr-time">
+      <div class="treasure glass">
+        <div><h2>Treasure Box</h2><div class="count" id="ownedCount">0 / 0 collected</div></div>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="progress"><div class="bar"><i id="bar" style="width:0"></i></div><span id="nextChest">10 points to the next chest</span></div>
+      </div>
+      <div class="board glass">
+        <div class="weekbar">
+          <button class="arrow" id="prevWeek" aria-label="Previous week">‹</button>
+          <h2 id="weekLabel">This Week</h2>
+          <button class="arrow" id="nextWeek" aria-label="Next week">›</button>
+        </div>
+        <div class="days" id="days"></div>
+      </div>
+      <aside class="panel glass">
+        <h2>Activities</h2>
+        <p class="hint">Drag an activity into <b>Today</b>. Tap it in Today to take one back.</p>
+        <div class="acts" id="acts"></div>
+        <div class="unlock-note" id="unlockNote"></div>
+      </aside>
+    </section>
+
+    <!-- DRESS UP -->
+    <section class="screen" id="scr-dress" hidden>
+      <div class="stage glass" id="stage"></div>
+      <aside class="wardrobe glass">
+        <h2 style="font-family:var(--display);margin:0;color:var(--rose);font-size:20px">Wardrobe</h2>
+        <div class="tabs" role="tablist" id="tabs"></div>
+        <p class="hint" style="font-size:12px;margin:0;opacity:.75">Drag onto a unicorn. Move it with one finger, pinch to resize, tap to take it off.</p>
+        <div class="wgrid" id="wgrid"></div>
+      </aside>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="screen" id="scr-set" hidden>
+      <div class="panel glass">
+        <h2>Background</h2>
+        <p class="hint">Pick a world.</p>
+        <div class="bgs" id="bgs"></div>
+      </div>
+      <div class="panel glass">
+        <h2>Points</h2>
+        <table class="rules" id="rules"></table>
+        <ul class="notes">
+          <li>Snack, Games and iPad Time unlock when today's points go above 13. If points drop back to 13 or below, they lock again.</li>
+          <li>At midnight, each learning or play activity that wasn't done that day takes away 1 point.</li>
+          <li class="rw">Every 10 total points earns a treasure chest. Opening a chest is free.</li>
+          <li>Records stay for about one month.</li>
+        </ul>
+        <button class="danger" id="resetBtn">Start over (erase everything)</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="mcard glass" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h2 id="mTitle">Treasure Chest!</h2>
+    <div class="chestwrap" id="chestwrap">
+      <div class="rays"></div>
+      <div class="prize" id="prize"></div>
+      <svg class="chest" viewBox="0 0 200 170" aria-hidden="true">
+        <defs>
+          <linearGradient id="cb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa6d2"/><stop offset="1" stop-color="#f06aa8"/></linearGradient>
+          <linearGradient id="cl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd0e8"/><stop offset="1" stop-color="#ff8fc4"/></linearGradient>
+          <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#f5a623"/></linearGradient>
+        </defs>
+        <g>
+          <rect x="18" y="78" width="164" height="86" rx="16" fill="url(#cb)" stroke="#c2185b" stroke-width="4"/>
+          <rect x="88" y="78" width="24" height="86" fill="url(#cg)"/>
+          <rect x="18" y="78" width="164" height="12" fill="#ffc0de" opacity=".6"/>
+          <path d="M100 104c-5-6-15-3-13 5 1 5 8 9 13 13 5-4 12-8 13-13 2-8-8-11-13-5z" fill="#fff" stroke="#c2185b" stroke-width="3"/>
+        </g>
+        <g class="lid">
+          <path d="M18 84V70c0-28 36-46 82-46s82 18 82 46v14z" fill="url(#cl)" stroke="#c2185b" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="88" y="25" width="24" height="59" fill="url(#cg)"/>
+          <circle cx="56" cy="52" r="5" fill="#fff" opacity=".8"/><circle cx="148" cy="48" r="4" fill="#fff" opacity=".7"/>
+        </g>
+      </svg>
+    </div>
+    <p id="mText">Tap the chest to open it!</p>
+    <div class="btns" id="mBtns"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"><span id="toastText"></span><button id="toastUndo" hidden>Undo</button></div>
+
+<script src="items.js"></script>
+<script>
+(() => {
+'use strict';
+const TASKS = [
+  {id:'typing',  name:'Typing Practice', pts:4},
+  {id:'math',    name:'Math',            pts:4},
+  {id:'en_read', name:'English Reading', pts:5},
+  {id:'cn_read', name:'Chinese Reading', pts:5},
+  {id:'en_write',name:'English Writing', pts:3},
+  {id:'cn_write',name:'Chinese Writing', pts:3},
+  {id:'exercise',name:'Exercise',        pts:1},
+  {id:'craft',   name:'Craft',           pts:1},
+  {id:'painting',name:'Painting',        pts:1},
+  {id:'snack',   name:'Snack',           pts:-1},
+  {id:'games',   name:'Games',           pts:-1},
+  {id:'ipad',    name:'iPad Time',       pts:-1},
+];
+const TASK = Object.fromEntries(TASKS.map(t => [t.id, t]));
+const POSITIVE = TASKS.filter(t => t.pts > 0);
+const UNLOCK_ABOVE = 13, CHEST_EVERY = 10, KEEP_DAYS = 35;
+const REWARDS = false; // chest drops + dress up; false = hidden
+if (!REWARDS) document.body.classList.add('no-rewards');
+const DAYS = [
+  {n:'Monday',c:'#8f9cf5',i:'♥'},{n:'Tuesday',c:'#6cc4e8',i:'★'},{n:'Wednesday',c:'#ff7eb6',i:'✿'},
+  {n:'Thursday',c:'#8fcf6e',i:'❀'},{n:'Friday',c:'#f59ad0',i:'☁'},{n:'Saturday',c:'#b48cf2',i:'☀'},{n:'Sunday',c:'#ff8f8f',i:'♡'}];
+const BGS = [
+  {id:'bg1',name:'Cloud Castle'},{id:'bg2',name:'Blossom Garden'},{id:'bg3',name:'Candy Carnival'},
+  {id:'bg4',name:'Starry Night'},{id:'bg5',name:'Rainbow Garden'}];
+const ITEMS = window.ITEMS, SIZES = window.SIZES;
+const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+const DROPS = [...ITEMS.map(i => i.id), ...BGS.slice(1).map(b => b.id)];
+const CATS = [
+  {id:'outfit',name:'Outfits',z:10},{id:'shoes',name:'Shoes',z:20,single:true},{id:'hair',name:'Hair',z:30,single:true},
+  {id:'head',name:'Headwear',z:40},{id:'acc',name:'Accessories',z:50}];
+const CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+const FACES = ['happy','wink','excited','shy','sleepy','proud'];
+const CHAR = {
+  boy:  {label:'Boy Unicorn', base:'base_boy', fp:'face_b_', face:{x:.632,y:.293,w:.91},
+         anchor:{hair:{x:.6,bottom:.37,w:.82}, hairBack:{x:.55,top:-.02,w:1.05}, head:{x:.62,y:.06,w:.46}, outfit:{x:.5,y:.76,w:.72}, shoes:{x:.5,bottom:1.02,w:.56}, acc:{x:.86,y:.66,w:.26}}},
+  girl: {label:'Girl Unicorn', base:'base_girl', fp:'face_g_', face:{x:.448,y:.3125,w:.822},
+         anchor:{hair:{x:.46,bottom:.38,w:.78}, hairBack:{x:.47,top:-.02,w:1.0}, head:{x:.46,y:.09,w:.44}, outfit:{x:.5,y:.78,w:.64}, shoes:{x:.5,bottom:1.02,w:.5}, acc:{x:.86,y:.66,w:.24}}},
+};
+const src = id => id.startsWith('bg') ? `assets/bg/${id}_t.jpg` : `assets/items/${id}.webp`;
+const icon = id => `assets/icons/${id}.webp`;
+const $ = s => document.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = k => { const [y,m,d] = k.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (k, n) => { const d = parse(k); d.setDate(d.getDate()+n); return keyOf(d); };
+const todayKey = () => keyOf(new Date());
+const mondayOf = k => { const d = parse(k); const wd = (d.getDay()+6)%7; d.setDate(d.getDate()-wd); return keyOf(d); };
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pretty = k => { const d = parse(k); return `${MON[d.getMonth()]} ${d.getDate()}`; };
+
+/* ---------- state ---------- */
+const KEY = 'unicornRoutine.v1';
+const fresh = () => ({v:1, start:todayKey(), archived:0, archiveUntil:null, logs:{}, maxTotal:0, opened:0,
+  owned:[], newIds:[], bg:'bg1', looks:{boy:{face:null,items:[]}, girl:{face:null,items:[]}}});
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+if (!S || S.v !== 1) S = fresh();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+const earned = k => { const l = S.logs[k]; if (!l) return 0; let s = 0; for (const t in l) s += (TASK[t]?.pts || 0) * l[t]; return s; };
+const missed = k => POSITIVE.filter(t => !(S.logs[k]?.[t.id] > 0)).length;
+const final = k => earned(k) - missed(k);
+
+function compute() {
+  const today = todayKey();
+  const cutoff = addDays(today, -KEEP_DAYS);
+  let d = S.archiveUntil && S.archiveUntil > S.start ? S.archiveUntil : S.start;
+  while (d < cutoff) { S.archived += final(d); delete S.logs[d]; d = addDays(d, 1); }
+  if (cutoff > (S.archiveUntil || '')) S.archiveUntil = cutoff > S.start ? cutoff : S.archiveUntil;
+  let total = S.archived;
+  for (let k = d; k < today; k = addDays(k, 1)) total += final(k);
+  const todayPts = earned(today);
+  total += todayPts;
+  S.maxTotal = Math.max(S.maxTotal, total);
+  const chestsEarned = 1 + Math.floor(Math.max(0, S.maxTotal) / CHEST_EVERY);
+  return {today, total, todayPts, avail: Math.max(0, chestsEarned - S.opened),
+          toNext: CHEST_EVERY - (Math.max(0, S.maxTotal) % CHEST_EVERY), unlocked: todayPts > UNLOCK_ABOVE};
+}
+let C = compute(); save();
+
+/* ---------- header ---------- */
+let weekOffset = 0, screen = 'time';
+function renderHeader() {
+  const h = new Date().getHours();
+  $('#greet').textContent = h < 12 ? 'Good Morning!' : h < 18 ? 'Good Afternoon!' : 'Good Evening!';
+  $('#avatar').style.backgroundImage = `url(${src(S.looks.girl.face ? 'face_g_'+S.looks.girl.face : 'face_g_happy')})`;
+  $('#total').textContent = C.total;
+  $('#todayPts').textContent = C.todayPts;
+  const b = $('#chestBadge'); b.hidden = !C.avail; b.textContent = C.avail;
+  $('#chestBtn').classList.toggle('ready', C.avail > 0);
+  document.body.style.backgroundImage = `url(assets/bg/${S.bg}.jpg)`;
+}
+
+/* ---------- timetable ---------- */
+function renderTreasure() {
+  $('#ownedCount').textContent = `${S.owned.length} / ${DROPS.length} collected`;
+  const th = $('#thumbs'); th.innerHTML = '';
+  if (!S.owned.length) th.append(el('div', 'empty', 'Open a chest to find your first treasure!'));
+  S.owned.slice(-14).reverse().forEach(id => {
+    const t = el('div', 't'); const im = new Image(); im.src = src(id); im.alt = nameOf(id); t.title = nameOf(id); t.append(im); th.append(t);
+  });
+  const got = CHEST_EVERY - C.toNext;
+  $('#bar').style.width = `${got / CHEST_EVERY * 100}%`;
+  $('#nextChest').textContent = C.avail ? `${C.avail} chest${C.avail>1?'s':''} ready to open! · ${C.toNext} pts to the next` : `${C.toNext} more point${C.toNext>1?'s':''} to the next chest`;
+}
+const nameOf = id => id.startsWith('bg') ? BGS.find(b => b.id === id).name : ITEM[id]?.name || id;
+
+function renderWeek() {
+  const today = C.today, mon = addDays(mondayOf(today), weekOffset * 7);
+  const minMon = mondayOf(addDays(today, -KEEP_DAYS + 1));
+  $('#prevWeek').disabled = addDays(mon, -7) < minMon || addDays(mon, -1) < S.start;
+  $('#nextWeek').disabled = weekOffset >= 0;
+  $('#weekLabel').textContent = weekOffset === 0 ? `This Week · ${pretty(mon)}–${pretty(addDays(mon,6))}` : `${pretty(mon)} – ${pretty(addDays(mon,6))}`;
+  const wrap = $('#days'); wrap.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const k = addDays(mon, i), info = DAYS[i];
+    const state = k === today ? 'today' : k > today ? 'future' : k < S.start || k < (S.archiveUntil||'') ? 'pre' : 'past';
+    const col = el('div', `day ${state}`); col.dataset.day = k; col.style.setProperty('--c', info.c);
+    col.innerHTML = `<header><div class="ico" style="color:${info.c}">${info.i}</div><span class="name">${info.n}</span><div class="date">${pretty(k)}</div>${state==='today'?'<span class="tag">TODAY</span>':''}</header>`;
+    const body = el('div', 'body');
+    const log = S.logs[k] || {};
+    TASKS.forEach(t => {
+      const n = log[t.id]; if (!n) return;
+      const chip = el(state === 'today' ? 'button' : 'div', 'chip' + (t.pts < 0 ? ' neg' : ''));
+      chip.innerHTML = `<img src="${icon(t.id)}" alt=""><span class="lbl">${t.name}</span><span class="x">${n > 1 ? '×' + n : ''}</span><span class="p">${t.pts > 0 ? '+' : ''}${t.pts * n}</span>`;
+      chip.title = t.name;
+      if (state === 'today') { chip.setAttribute('aria-label', `Remove one ${t.name}`); chip.onclick = () => removeTask(t.id); }
+      body.append(chip);
+    });
+    if (state === 'today' || (state === 'future' && !body.children.length)) for (let j = body.children.length; j < 3; j++) body.append(el('div', 'slot', state === 'today' ? '+' : ''));
+    col.append(body);
+    const f = el('footer');
+    if (state === 'today') {
+      const m = missed(k);
+      f.innerHTML = `<b>${earned(k) > 0 ? '+' : ''}${earned(k)}</b>${m ? `<span class="miss">${m} still to do</span>` : 'All done! ✨'}`;
+    } else if (state === 'past') {
+      const m = missed(k), fin = final(k);
+      f.innerHTML = `<b>${fin > 0 ? '+' : ''}${fin}</b>${m ? `<span class="miss">${earned(k)} earned, −${m} missed</span>` : 'Perfect day! ✨'}`;
+    } else f.innerHTML = '<b>&nbsp;</b>&nbsp;';
+    col.append(f); wrap.append(col);
+  }
+}
+
+function renderActs() {
+  const wrap = $('#acts'); wrap.innerHTML = '';
+  TASKS.forEach(t => {
+    const locked = t.pts < 0 && !C.unlocked;
+    const a = el('div', 'act' + (t.pts < 0 ? ' neg' : '') + (locked ? ' locked' : ''));
+    a.tabIndex = 0; a.setAttribute('role', 'button'); a.setAttribute('aria-label', `${t.name}, ${t.pts > 0 ? '+' : ''}${t.pts} points${locked ? ', locked' : ''}`);
+    a.innerHTML = `<img src="${icon(t.id)}" alt=""><span class="n">${t.name}</span><span class="pts">${t.pts > 0 ? '+' : ''}${t.pts}</span>${locked ? '<span class="lock">🔒</span>' : ''}`;
+    a.addEventListener('pointerdown', e => {
+      if (locked) { a.classList.remove('shake'); void a.offsetWidth; a.classList.add('shake'); toast(`Get more than ${UNLOCK_ABOVE} points today to unlock ${t.name}.`); return; }
+      if (weekOffset !== 0) { weekOffset = 0; renderWeek(); }
+      drag(e, icon(t.id), 64, {
+        target: (x, y) => document.elementFromPoint(x, y)?.closest('.day.today'),
+        drop: (tgt, x, y) => addTask(t.id, x, y),
+        tap: () => toast(`Drag ${t.name} into Today's column.`),
+      });
+    });
+    a.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !locked) { e.preventDefault(); const r = a.getBoundingClientRect(); addTask(t.id, r.left + r.width/2, r.top); } });
+    wrap.append(a);
+  });
+  $('#unlockNote').innerHTML = C.unlocked
+    ? `🎉 Treats are unlocked! Each one costs 1 point. They lock again at ${UNLOCK_ABOVE} points or below.`
+    : `🔒 Snack, Games and iPad Time unlock above <b>${UNLOCK_ABOVE}</b> points today. <b>${UNLOCK_ABOVE + 1 - C.todayPts}</b> more to go!`;
+}
+
+function addTask(id, x, y) {
+  const t = TASK[id], k = C.today;
+  if (t.pts < 0 && !C.unlocked) return;
+  const before = C.avail;
+  S.logs[k] = S.logs[k] || {}; S.logs[k][id] = (S.logs[k][id] || 0) + 1;
+  refresh();
+  floatText(`${t.pts > 0 ? '+' : ''}${t.pts}`, x, y, t.pts < 0);
+  if (t.pts > 0) sparkle(x, y);
+  if (REWARDS && C.avail > before) setTimeout(() => toast('A treasure chest is ready! Tap Chest to open it.'), 500);
+}
+function removeTask(id) {
+  const k = C.today, l = S.logs[k]; if (!l?.[id]) return;
+  l[id]--; if (!l[id]) delete l[id];
+  refresh();
+  toast(`Took back one ${TASK[id].name}.`, () => { S.logs[k] = S.logs[k] || {}; S.logs[k][id] = (S.logs[k][id] || 0) + 1; refresh(); });
+}
+
+/* ---------- drag helper ---------- */
+function drag(e, imgSrc, size, {target, drop, tap}) {
+  const sx = e.clientX, sy = e.clientY, t0 = Date.now();
+  let ghost = null, hot = null;
+  const move = ev => {
+    const dx = ev.clientX - sx, dy = ev.clientY - sy;
+    if (!ghost && Math.hypot(dx, dy) > 8) {
+      ghost = new Image(); ghost.src = imgSrc; ghost.className = 'ghost'; ghost.style.width = size + 'px'; document.body.append(ghost);
+    }
+    if (!ghost) return;
+    ev.preventDefault();
+    ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
+    const tg = target(ev.clientX, ev.clientY);
+    if (tg !== hot) { hot?.classList.remove('hot'); hot = tg; hot?.classList.add('hot'); }
+  };
+  const end = ev => {
+    window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
+    hot?.classList.remove('hot');
+    if (ghost) {
+      ghost.remove();
+      if (ev.type === 'pointerup') { const tg = target(ev.clientX, ev.clientY); if (tg) drop(tg, ev.clientX, ev.clientY); }
+    } else if (ev.type === 'pointerup' && Date.now() - t0 < 500) tap?.();
+  };
+  window.addEventListener('pointermove', move, {passive:false}); window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+}
+
+/* ---------- effects ---------- */
+function floatText(txt, x, y, neg) { const f = el('div', 'float' + (neg ? ' neg' : ''), txt); f.style.left = (x - 20) + 'px'; f.style.top = (y - 30) + 'px'; document.body.append(f); setTimeout(() => f.remove(), 1000); }
+function sparkle(x, y) {
+  const cols = ['#ffc83d','#ff8fc4','#b993ff','#7fd0e8'];
+  for (let i = 0; i < 10; i++) {
+    const s = el('div', 'spark', `<svg viewBox="0 0 24 24"><path d="M12 0l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="${cols[i%4]}"/></svg>`);
+    const a = i / 10 * Math.PI * 2, r = 50 + Math.random() * 30;
+    s.style.left = x + 'px'; s.style.top = y + 'px'; s.style.setProperty('--dx', Math.cos(a)*r + 'px'); s.style.setProperty('--dy', Math.sin(a)*r + 'px');
+    document.body.append(s); setTimeout(() => s.remove(), 800);
+  }
+}
+let toastTimer;
+function toast(msg, undo) {
+  const t = $('#toast'); $('#toastText').textContent = msg;
+  const u = $('#toastUndo'); u.hidden = !undo; u.onclick = () => { undo(); t.classList.remove('show'); };
+  t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), undo ? 4500 : 2600);
+}
+
+/* ---------- chest ---------- */
+function openChestModal() {
+  const m = $('#modal'), w = $('#chestwrap'); m.hidden = false;
+  w.className = 'chestwrap'; $('#prize').innerHTML = '';
+  const btns = $('#mBtns'); btns.innerHTML = '';
+  const close = el('button', 'btn soft', 'Close'); close.onclick = closeModal;
+  if (!C.avail) {
+    $('#mTitle').textContent = 'Keep going!';
+    $('#mText').innerHTML = `Earn <b>${C.toNext}</b> more point${C.toNext>1?'s':''} to get your next treasure chest.`;
+    btns.append(close); return;
+  }
+  const pool = DROPS.filter(id => !S.owned.includes(id));
+  if (!pool.length) {
+    $('#mTitle').textContent = 'You collected everything!';
+    $('#mText').textContent = 'No new outfits yet. Ask a grown-up to add more! 🦄 Your chests will wait for you.';
+    btns.append(close); return;
+  }
+  $('#mTitle').textContent = S.opened === 0 ? 'Welcome Chest!' : 'Treasure Chest!';
+  $('#mText').textContent = 'Tap the chest to open it!';
+  const go = el('button', 'btn', 'Open it!');
+  const doOpen = () => {
+    if (w.classList.contains('shaking') || w.classList.contains('open')) return;
+    w.classList.add('shaking'); go.remove();
+    setTimeout(() => {
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      S.opened++; S.owned.push(id); S.newIds.push(id); C = compute(); save();
+      const im = new Image(); im.src = id.startsWith('bg') ? `assets/bg/${id}_t.jpg` : src(id); im.alt = nameOf(id);
+      if (id.startsWith('bg')) im.style.borderRadius = '14px';
+      $('#prize').append(im);
+      w.classList.remove('shaking'); w.classList.add('open');
+      const kind = id.startsWith('bg') ? 'New world' : CAT[ITEM[id].cat].name.replace(/s$/, '');
+      $('#mTitle').textContent = nameOf(id);
+      $('#mText').innerHTML = `${kind} added to your Treasure Box!${id.startsWith('bg') ? ' Choose it in Settings.' : ''}`;
+      btns.innerHTML = '';
+      if (C.avail) { const again = el('button', 'btn', `Open another (${C.avail})`); again.onclick = openChestModal; btns.append(again); }
+      const dress = el('button', 'btn' + (C.avail ? ' soft' : ''), id.startsWith('bg') ? 'Go to Settings' : 'Dress up!');
+      dress.onclick = () => { closeModal(); show(id.startsWith('bg') ? 'set' : 'dress'); if (!id.startsWith('bg')) { tab = ITEM[id].cat; renderWardrobe(); } };
+      btns.append(dress, close);
+      refresh(false);
+      const r = w.getBoundingClientRect(); sparkle(r.left + r.width/2, r.top + 60);
+    }, 750);
+  };
+  w.onclick = doOpen; go.onclick = doOpen;
+  btns.append(go, close);
+}
+function closeModal() { $('#modal').hidden = true; refresh(false); }
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+$('#chestBtn').onclick = openChestModal;
+
+/* ---------- dress up ---------- */
+let tab = 'outfit', active = null;
+const dolls = {};
+function buildStage() {
+  const st = $('#stage'); st.innerHTML = '';
+  st.style.backgroundImage = `url(assets/bg/${S.bg}.jpg)`;
+  for (const who of ['boy', 'girl']) {
+    const c = CHAR[who], [bw, bh] = SIZES[c.base];
+    const u = el('div', 'unicorn');
+    const d = el('div', 'doll'); d.dataset.who = who; d.style.aspectRatio = `${bw} / ${bh}`;
+    d.innerHTML = `<img class="base" src="${src(c.base)}" alt="${c.label}" style="z-index:2">`;
+    const face = el('img', 'face'); face.alt = ''; d.append(face);
+    const ctrl = el('div', 'ctrl');
+    ctrl.innerHTML = `<div class="who">${c.label} <button data-clear>Clear</button></div>`;
+    const faces = el('div', 'faces');
+    const orig = el('button', 'orig', 'Original'); orig.dataset.face = ''; faces.append(orig);
+    FACES.forEach(f => { const b = el('button'); b.dataset.face = f; b.title = f[0].toUpperCase() + f.slice(1); b.setAttribute('aria-label', b.title + ' face'); b.style.backgroundImage = `url(${src(c.fp + f)})`; faces.append(b); });
+    faces.onclick = e => { const b = e.target.closest('button'); if (!b) return; S.looks[who].face = b.dataset.face || null; save(); renderDoll(who); renderHeader(); };
+    ctrl.querySelector('[data-clear]').onclick = () => { S.looks[who].items = []; save(); renderDoll(who); };
+    ctrl.append(faces);
+    u.append(d, ctrl); st.append(u);
+    dolls[who] = {d, face, faces};
+    bindDoll(who);
+    renderDoll(who);
+  }
+}
+function renderDoll(who) {
+  const {d, face, faces} = dolls[who], c = CHAR[who], look = S.looks[who];
+  if (look.face) { const [fw, fh] = SIZES[c.fp + look.face], [bw, bh] = SIZES[c.base];
+    face.src = src(c.fp + look.face); face.hidden = false;
+    const w = c.face.w, h = w * bw * fh / fw / bh;
+    Object.assign(face.style, {left: (c.face.x - w/2) * 100 + '%', top: (c.face.y - h/2) * 100 + '%', width: w * 100 + '%', zIndex: 5});
+  } else face.hidden = true;
+  faces.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.face || null) === look.face)));
+  d.querySelectorAll('.worn').forEach(n => { if (!look.items.find(i => i.uid === n.dataset.uid)) n.remove(); });
+  look.items.forEach((it, idx) => {
+    let n = d.querySelector(`.worn[data-uid="${it.uid}"]`);
+    if (!n) { n = new Image(); n.className = 'worn'; n.dataset.uid = it.uid; n.src = src(it.id); n.alt = ITEM[it.id].name; n.draggable = false; d.append(n); }
+    Object.assign(n.style, {left: it.x * 100 + '%', top: it.y * 100 + '%', width: it.w * 100 + '%', zIndex: it.id.startsWith('hair_g') ? 1 : CAT[ITEM[it.id].cat].z + idx});
+    n.classList.toggle('active', active?.uid === it.uid);
+  });
+}
+function equip(who, id) {
+  const c = CHAR[who], it = ITEM[id], cat = it.cat, look = S.looks[who], [bw, bh] = SIZES[c.base];
+  if (CAT[cat].single) look.items = look.items.filter(i => ITEM[i.id].cat !== cat);
+  look.items = look.items.filter(i => i.id !== id);
+  const a = id.startsWith('hair_g') ? c.anchor.hairBack : c.anchor[cat];
+  let w = a.w, x = a.x;
+  if (cat === 'head' && id.includes('clip')) { w = .26; x = a.x + .2; }
+  if (cat === 'acc') { const n = look.items.filter(i => ITEM[i.id].cat === 'acc').length; if (n % 2) x = 1 - a.x; }
+  const h = w * bw * it.h / it.w / bh;
+  let y = a.y ?? (a.top != null ? a.top + h/2 : a.bottom - h/2);
+  if (cat === 'acc') y += Math.floor(look.items.filter(i => ITEM[i.id].cat === 'acc').length / 2) * -.12;
+  const item = {uid: Math.random().toString(36).slice(2, 9), id, x, y, w};
+  look.items.push(item); active = item;
+  S.newIds = S.newIds.filter(n => n !== id);
+  save(); renderDoll(who); renderWardrobe();
+  const r = dolls[who].d.getBoundingClientRect(); sparkle(r.left + x * r.width, r.top + y * r.height);
+}
+function bindDoll(who) {
+  const d = dolls[who].d, ptrs = new Map();
+  let g = null; // gesture
+  d.addEventListener('pointerdown', e => {
+    const n = e.target.closest('.worn');
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if (ptrs.size === 1) {
+      if (!n) { active = null; renderDoll(who); return; }
+      const it = S.looks[who].items.find(i => i.uid === n.dataset.uid); if (!it) return;
+      active = it; renderDoll(who);
+      g = {it, n, sx: e.clientX, sy: e.clientY, ox: it.x, oy: it.y, t0: Date.now(), moved: false, pinch: null};
+      d.setPointerCapture?.(e.pointerId);
+    } else if (ptrs.size === 2 && g) {
+      const [p1, p2] = [...ptrs.values()];
+      g.pinch = {d0: Math.hypot(p1.x - p2.x, p1.y - p2.y), w0: g.it.w}; g.moved = true;
+    }
+    e.preventDefault();
+  });
+  d.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId) || !g) return;
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    const r = d.getBoundingClientRect();
+    if (g.pinch && ptrs.size >= 2) {
+      const [p1, p2] = [...ptrs.values()];
+      g.it.w = Math.min(1.6, Math.max(.08, g.pinch.w0 * Math.hypot(p1.x - p2.x, p1.y - p2.y) / g.pinch.d0));
+    } else if (!g.pinch) {
+      const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+      if (Math.hypot(dx, dy) > 6) g.moved = true;
+      if (g.moved) { g.it.x = Math.min(1.1, Math.max(-.1, g.ox + dx / r.width)); g.it.y = Math.min(1.1, Math.max(-.1, g.oy + dy / r.height)); }
+    }
+    renderDoll(who);
+  });
+  const up = e => {
+    ptrs.delete(e.pointerId);
+    if (!g) return;
+    if (ptrs.size === 0) {
+      if (!g.moved && Date.now() - g.t0 < 350 && e.type === 'pointerup') dropOff(who, g.it, g.n);
+      else save();
+      g = null;
+    } else if (g.pinch) { const [p] = [...ptrs.values()]; g.pinch = null; g.sx = p.x; g.sy = p.y; g.ox = g.it.x; g.oy = g.it.y; }
+  };
+  d.addEventListener('pointerup', up); d.addEventListener('pointercancel', up);
+  d.addEventListener('wheel', e => { const n = e.target.closest('.worn'); if (!n) return; e.preventDefault();
+    const it = S.looks[who].items.find(i => i.uid === n.dataset.uid); it.w = Math.min(1.6, Math.max(.08, it.w * (e.deltaY < 0 ? 1.06 : .94))); save(); renderDoll(who); }, {passive:false});
+}
+function dropOff(who, it, n) {
+  S.looks[who].items = S.looks[who].items.filter(i => i.uid !== it.uid); active = null; save();
+  n.classList.add('falling'); n.style.transform = `translate(-50%, 160%) rotate(${Math.random() > .5 ? 35 : -35}deg)`;
+  setTimeout(() => renderDoll(who), 700);
+}
+function renderTabs() {
+  const tb = $('#tabs'); tb.innerHTML = '';
+  CATS.forEach(c => {
+    const all = ITEMS.filter(i => i.cat === c.id), own = all.filter(i => S.owned.includes(i.id)).length;
+    const b = el('button', '', `${c.name} <small>${own}/${all.length}</small>`); b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(tab === c.id));
+    b.onclick = () => { tab = c.id; renderWardrobe(); }; tb.append(b);
+  });
+}
+function renderWardrobe() {
+  renderTabs();
+  const g = $('#wgrid'); g.innerHTML = '';
+  const list = ITEMS.filter(i => i.cat === tab).sort((a, b) => S.owned.includes(b.id) - S.owned.includes(a.id));
+  list.forEach(it => {
+    const owned = S.owned.includes(it.id);
+    const t = el('div', 'wi' + (owned ? '' : ' locked'));
+    t.innerHTML = `<img src="${src(it.id)}" alt=""><span>${owned ? it.name : 'Find me in a chest'}</span>${S.newIds.includes(it.id) && owned ? '<i class="new">NEW</i>' : ''}`;
+    if (owned) {
+      t.title = it.name;
+      t.addEventListener('pointerdown', e => drag(e, src(it.id), 110, {
+        target: (x, y) => document.elementFromPoint(x, y)?.closest('.doll'),
+        drop: tg => equip(tg.dataset.who, it.id),
+        tap: () => toast(`Drag ${it.name} onto a unicorn.`),
+      }));
+    }
+    g.append(t);
+  });
+}
+
+/* ---------- settings ---------- */
+function renderSettings() {
+  const g = $('#bgs'); g.innerHTML = '';
+  BGS.forEach(b => {
+    const owned = !REWARDS || b.id === 'bg1' || S.owned.includes(b.id);
+    const c = el('button', 'bgc' + (owned ? '' : ' locked'));
+    c.setAttribute('aria-pressed', String(S.bg === b.id));
+    c.innerHTML = `<img src="assets/bg/${b.id}_t.jpg" alt=""><span>${b.name}</span>${owned ? '' : '<div class="lk">🔒<br>Find this world in a treasure chest</div>'}`;
+    c.onclick = () => { if (!owned) { toast('Keep earning points to find this world in a chest!'); return; } S.bg = b.id; save(); renderHeader(); renderSettings(); };
+    g.append(c);
+  });
+  $('#rules').innerHTML = TASKS.map(t => `<tr><td><img src="${icon(t.id)}" alt="">${t.name}</td><td>${t.pts > 0 ? '+' : ''}${t.pts}</td></tr>`).join('');
+}
+let armed = null;
+$('#resetBtn').onclick = e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Tap again to erase everything'; clearTimeout(armed); armed = setTimeout(() => { b.classList.remove('armed'); b.textContent = 'Start over (erase everything)'; }, 4000); return; }
+  S = fresh(); save(); location.reload();
+};
+
+/* ---------- navigation ---------- */
+function show(name) {
+  screen = name;
+  for (const s of ['time', 'dress', 'set']) $('#scr-' + s).hidden = s !== name;
+  document.querySelectorAll('.navbtn[data-go]').forEach(b => b.dataset.go === name ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current'));
+  if (name === 'dress') { buildStage(); renderWardrobe(); }
+  if (name === 'set') renderSettings();
+}
+document.querySelectorAll('.navbtn[data-go]').forEach(b => b.onclick = () => show(b.dataset.go));
+$('#prevWeek').onclick = () => { weekOffset--; renderWeek(); };
+$('#nextWeek').onclick = () => { weekOffset++; renderWeek(); };
+
+function refresh(doSave = true) {
+  C = compute(); save();
+  renderHeader(); renderTreasure(); renderWeek(); renderActs();
+}
+let lastDay = C.today;
+setInterval(() => { if (todayKey() !== lastDay) { lastDay = todayKey(); weekOffset = 0; refresh(); } else renderHeader(); }, 30000);
+
+refresh();
+if (location.hash === '#set' || (REWARDS && location.hash === '#dress')) show(location.hash.slice(1) === 'set' ? 'set' : 'dress');
+if (REWARDS && C.avail && S.opened === 0) setTimeout(() => toast('🎁 You have a Welcome Chest! Tap Chest to open it.'), 600);
+})();
+</script>
