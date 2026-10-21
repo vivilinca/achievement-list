@@ -12,7 +12,7 @@
 | English Reading / Chinese Reading | +5 |
 | English Writing / Chinese Writing | +3 |
 | Exercise / Craft / Painting | +1 |
-| Snack / Games / iPad Time | −1（当天超过 13 分才解锁） |
+| Snack / Games / iPad Time | −5（当天超过 13 分才解锁） |
 
 - 每天午夜，当天没做的加分项各扣 1 分。
 - 记录保留约 35 天。数据保存在浏览器本地（localStorage），不同设备之间不同步。

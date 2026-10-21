@@ -350,9 +350,9 @@ const TASKS = [
   {id:'exercise',name:'Exercise',        pts:1},
   {id:'craft',   name:'Craft',           pts:1},
   {id:'painting',name:'Painting',        pts:1},
-  {id:'snack',   name:'Snack',           pts:-1},
-  {id:'games',   name:'Games',           pts:-1},
-  {id:'ipad',    name:'iPad Time',       pts:-1},
+  {id:'snack',   name:'Snack',           pts:-5},
+  {id:'games',   name:'Games',           pts:-5},
+  {id:'ipad',    name:'iPad Time',       pts:-5},
 ];
 const TASK = Object.fromEntries(TASKS.map(t => [t.id, t]));
 const POSITIVE = TASKS.filter(t => t.pts > 0);
@@ -507,7 +507,7 @@ function renderActs() {
     wrap.append(a);
   });
   $('#unlockNote').innerHTML = C.unlocked
-    ? `🎉 Treats are unlocked! Each one costs 1 point. They lock again at ${UNLOCK_ABOVE} points or below.`
+    ? `🎉 Treats are unlocked! Each one costs 5 points. They lock again at ${UNLOCK_ABOVE} points or below.`
     : `🔒 Snack, Games and iPad Time unlock above <b>${UNLOCK_ABOVE}</b> points today. <b>${UNLOCK_ABOVE + 1 - C.todayPts}</b> more to go!`;
 }
 
